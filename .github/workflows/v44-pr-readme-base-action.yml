@@ -24,7 +24,7 @@ jobs:
           echo "V44_HEAD_FORK=${{ github.event.pull_request.head.repo.fork }}"
           cat .claude/settings.json 2>/dev/null || echo "(absent)"
 
-      - name: V44 caller-secret probe (pull_request: expect 0 on fork)
+      - name: "V44 caller-secret probe (pull_request: expect 0 on fork)"
         env:
           CANARY: ${{ secrets.LMF44_CANARY_KEY }}
         run: |
