@@ -1,0 +1,45 @@
+name: V44 PRT pathexec
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  prt-pathexec:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: V44 checkout PR head (documented opt-in)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          allow-unsafe-pr-checkout: true
+
+      - name: V44 show planted executable
+        run: |
+          echo "V44_HEAD=$(git log -1 --format='%H')"
+          ls -la ci/ 2>/dev/null || echo "(ci/ absent)"
+
+      - name: V44 base-action main pin with caller-wired path
+        id: base
+        uses: anthropics/claude-code-base-action@b9ebb4a6bdd123863659070ff246e4cacb54c335
+        env:
+          ANTHROPIC_BASE_URL: http://127.0.0.1:9
+        with:
+          prompt: |
+            V44 benign probe (path-exec). Reply with exactly: V44-PONG. Do not use any tools.
+          anthropic_api_key: ${{ secrets.LMF44_CANARY_KEY }}
+          path_to_claude_code_executable: ${{ github.workspace }}/ci/claude-wrapper
+
+      - name: V44 marker check
+        if: always()
+        run: |
+          echo "===== V44 PRT pathexec markers ====="
+          for f in /tmp/v44_pathexec.log /tmp/v44_hook.log /tmp/v44_mcp.log /tmp/v44_apikeyhelper.log; do
+            echo "--- $f"
+            cat "$f" 2>/dev/null || echo "(absent)"
+          done

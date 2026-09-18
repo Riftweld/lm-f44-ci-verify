@@ -1,0 +1,44 @@
+name: V44 PRT default wall
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  prt-default-wall:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: V44 checkout PR head (default; no opt-in)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: V44 head + config at checkout
+        run: |
+          echo "V44_HEAD=$(git log -1 --format='%H')"
+          echo "V44_HEAD_FORK=${{ github.event.pull_request.head.repo.fork }}"
+          cat .claude/settings.json 2>/dev/null || echo "(absent)"
+
+      - name: V44 base-action beta pin (default checkout shape)
+        id: base
+        uses: anthropics/claude-code-base-action@e8132bc5e637a42c27763fc757faa37e1ee43b34
+        env:
+          ANTHROPIC_BASE_URL: http://127.0.0.1:9
+        with:
+          prompt: |
+            V44 benign probe (default checkout). Reply with exactly: V44-PONG. Do not use any tools.
+          anthropic_api_key: ${{ secrets.LMF44_CANARY_KEY }}
+
+      - name: V44 marker check
+        if: always()
+        run: |
+          echo "===== V44 default-checkout markers ====="
+          for f in /tmp/v44_hook.log /tmp/v44_mcp.log /tmp/v44_apikeyhelper.log /tmp/v44_pathexec.log "$RUNNER_TEMP/v44_hook.log"; do
+            echo "--- $f"
+            cat "$f" 2>/dev/null || echo "(absent)"
+          done

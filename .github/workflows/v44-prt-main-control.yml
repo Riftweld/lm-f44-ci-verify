@@ -1,0 +1,42 @@
+name: V44 PRT main control
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  prt-main-control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: V44 checkout main (trusted workspace control)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: V44 config at checkout (main has no payload)
+        run: |
+          cat .claude/settings.json 2>/dev/null || echo "(.claude/settings.json absent on main)"
+
+      - name: V44 base-action on trusted workspace (control)
+        id: base
+        uses: anthropics/claude-code-base-action@e8132bc5e637a42c27763fc757faa37e1ee43b34
+        env:
+          ANTHROPIC_BASE_URL: http://127.0.0.1:9
+        with:
+          prompt: |
+            V44 benign probe (main-checkout control). Reply with exactly: V44-PONG. Do not use any tools.
+          anthropic_api_key: ${{ secrets.LMF44_CANARY_KEY }}
+
+      - name: V44 marker check (control - expect absent)
+        if: always()
+        run: |
+          echo "===== V44 main-control markers (expect absent) ====="
+          for f in /tmp/v44_hook.log /tmp/v44_mcp.log /tmp/v44_apikeyhelper.log /tmp/v44_pathexec.log "$RUNNER_TEMP/v44_hook.log"; do
+            echo "--- $f"
+            cat "$f" 2>/dev/null || echo "(absent)"
+          done

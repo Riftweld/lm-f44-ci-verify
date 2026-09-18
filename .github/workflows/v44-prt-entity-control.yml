@@ -1,0 +1,53 @@
+name: V44 PRT entity control
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  prt-entity-control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: V44 checkout PR head (opt-in so the control runs on fork heads too)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          allow-unsafe-pr-checkout: true
+
+      - name: V44 config at checkout time
+        run: |
+          cat .claude/settings.json 2>/dev/null || echo "(absent)"
+
+      - name: V44 claude-code-action v1.0.226 (entity path, restore gate)
+        id: claude
+        uses: anthropics/claude-code-action@v1.0.226
+        env:
+          ANTHROPIC_BASE_URL: http://127.0.0.1:9
+        with:
+          prompt: |
+            V44 benign probe (entity-path control). Reply with exactly: V44-PONG. Do not use any tools.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          anthropic_api_key: ${{ secrets.LMF44_CANARY_KEY }}
+          classify_inline_comments: "false"
+          show_full_output: "true"
+
+      - name: V44 config state after the action
+        if: always()
+        run: |
+          cat .claude/settings.json 2>/dev/null || echo "(absent/restored)"
+
+      - name: V44 marker check (control - expect absent)
+        if: always()
+        run: |
+          echo "===== V44 entity-control markers (expect absent) ====="
+          for f in /tmp/v44_hook.log /tmp/v44_mcp.log /tmp/v44_apikeyhelper.log /tmp/v44_pathexec.log "$RUNNER_TEMP/v44_hook.log"; do
+            echo "--- $f"
+            cat "$f" 2>/dev/null || echo "(absent)"
+          done
